@@ -34,11 +34,8 @@ export function LogoUploader({ onUpload, currentLogo, onClear }: LogoUploaderPro
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
-
       const files = e.dataTransfer.files;
-      if (files && files[0]) {
-        processFile(files[0]);
-      }
+      if (files && files[0]) processFile(files[0]);
     },
     [onUpload]
   );
@@ -46,19 +43,16 @@ export function LogoUploader({ onUpload, currentLogo, onClear }: LogoUploaderPro
   const handleFileInput = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
-      if (files && files[0]) {
-        processFile(files[0]);
-      }
+      if (files && files[0]) processFile(files[0]);
     },
     [onUpload]
   );
 
   const processFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      alert("Por favor, sube una imagen válida (PNG, JPG, SVG)");
+      alert("Por favor, sube una imagen valida (PNG, JPG, SVG)");
       return;
     }
-
     const reader = new FileReader();
     reader.onload = (e) => {
       const preview = e.target?.result as string;
@@ -69,7 +63,7 @@ export function LogoUploader({ onUpload, currentLogo, onClear }: LogoUploaderPro
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Tu logo</h3>
+      <h3 className="text-lg font-semibold font-display">Tu logo</h3>
 
       <AnimatePresence mode="wait">
         {currentLogo ? (
@@ -109,8 +103,8 @@ export function LogoUploader({ onUpload, currentLogo, onClear }: LogoUploaderPro
                 "flex flex-col items-center justify-center p-8 rounded-2xl cursor-pointer",
                 "border-2 border-dashed transition-all duration-300",
                 isDragging
-                  ? "border-[var(--foreground)] bg-[var(--foreground)]/5"
-                  : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--foreground)]"
+                  ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 scale-[1.02]"
+                  : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--brand-primary)]"
               )}
             >
               <input
@@ -120,24 +114,24 @@ export function LogoUploader({ onUpload, currentLogo, onClear }: LogoUploaderPro
                 className="hidden"
               />
 
-              <div
+              <motion.div
+                animate={isDragging ? { scale: 1.2, rotate: 5 } : { scale: 1, rotate: 0 }}
                 className={cn(
                   "w-14 h-14 rounded-2xl flex items-center justify-center mb-4",
-                  "bg-[var(--foreground)] text-[var(--background)]",
-                  "transition-transform duration-300",
-                  isDragging && "scale-110"
+                  "transition-colors duration-300",
+                  isDragging
+                    ? "bg-[var(--brand-primary)] text-white"
+                    : "bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white"
                 )}
               >
                 <IconUpload className="w-6 h-6" />
-              </div>
+              </motion.div>
 
               <p className="text-sm font-medium text-center">
-                {isDragging
-                  ? "Suelta aquí tu logo"
-                  : "Arrastra tu logo aquí"}
+                {isDragging ? "Suelta aqui tu logo" : "Arrastra tu logo aqui"}
               </p>
               <p className="text-xs text-[var(--muted)] mt-2">
-                PNG, JPG o SVG (máx. 5MB)
+                PNG, JPG o SVG (max. 5MB)
               </p>
             </label>
           </motion.div>

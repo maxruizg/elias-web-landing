@@ -12,6 +12,11 @@ import "./styles/global.css";
 
 import { Header } from "~/components/layout/Header";
 import { Footer } from "~/components/layout/Footer";
+import { BottomNav } from "~/components/layout/BottomNav";
+import { ScrollProgress } from "~/components/ui/ScrollProgress";
+import { CursorFollower } from "~/components/ui/CursorFollower";
+import { CommandPalette } from "~/components/ui/CommandPalette";
+import { Confetti } from "~/components/ui/Confetti";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -22,7 +27,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap",
   },
 ];
 
@@ -34,7 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta
           name="description"
-          content="Elías Distribución - Tu socio estratégico en artículos promocionales. Más de 15 años impulsando marcas con productos de calidad."
+          content="Elias Distribucion - Tu socio estrategico en articulos promocionales. Mas de 15 anos impulsando marcas con productos de calidad."
         />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <Meta />
@@ -69,17 +74,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <>
+      {/* Skip Navigation Link */}
+      <a href="#main-content" className="skip-nav">
+        Saltar al contenido principal
+      </a>
+
+      {/* Scroll Progress Indicator */}
+      <ScrollProgress />
+
       <Header />
-      <main className="min-h-screen">
+      <main id="main-content" className="min-h-screen">
         <Outlet />
       </main>
       <Footer />
+      <BottomNav />
+      <CursorFollower />
+      <CommandPalette />
+      <Confetti />
+
       {/* Floating WhatsApp Button */}
       <a
         href="https://wa.me/5212345678901"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300"
+        className="fixed bottom-24 md:bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 hover:shadow-[0_0_20px_rgba(37,211,102,0.4)]"
         aria-label="Contactar por WhatsApp"
       >
         <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
@@ -94,12 +112,13 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "Ha ocurrido un error inesperado.";
   let stack: string | undefined;
+  const is404 = isRouteErrorResponse(error) && error.status === 404;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message = is404 ? "404" : "Error";
     details =
-      error.status === 404
-        ? "La página que buscas no existe."
+      is404
+        ? "Parece que esta pagina se fue de vacaciones..."
         : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
@@ -107,18 +126,55 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold mb-4">{message}</h1>
-        <p className="text-xl text-[var(--muted)] mb-8">{details}</p>
-        <a
-          href="/"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--foreground)] text-[var(--background)] rounded-xl font-medium hover:opacity-90 transition-opacity"
-        >
-          Volver al inicio
-        </a>
+    <main className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 dot-grid opacity-30" />
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[var(--brand-primary)] opacity-10 blur-[100px]" />
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-[var(--brand-secondary)] opacity-10 blur-[100px]" />
+
+      <div className="relative text-center max-w-lg">
+        {/* Animated number */}
+        <div className="relative inline-block mb-6">
+          <span className="text-[10rem] md:text-[14rem] font-extrabold leading-none font-display gradient-text-animate select-none">
+            {message}
+          </span>
+          {is404 && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-6xl animate-bounce" role="img" aria-label="confused face">
+                &#129300;
+              </span>
+            </div>
+          )}
+        </div>
+
+        <p className="text-xl md:text-2xl text-[var(--muted)] mb-4 font-display">{details}</p>
+
+        {is404 && (
+          <p className="text-sm text-[var(--muted)] mb-8">
+            Pero no te preocupes, tu marca sigue siendo increible.
+          </p>
+        )}
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-lg"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Volver al inicio
+          </a>
+          <a
+            href="/catalogo"
+            className="inline-flex items-center gap-2 px-8 py-4 border border-[var(--border)] text-[var(--foreground)] rounded-xl font-semibold hover:bg-[var(--surface)] transition-colors"
+          >
+            Ver catalogo
+          </a>
+        </div>
+
         {stack && (
-          <pre className="mt-8 p-4 bg-[var(--surface)] rounded-xl text-left text-sm overflow-auto max-w-2xl mx-auto">
+          <pre className="mt-8 p-4 bg-[var(--surface)] rounded-xl text-left text-sm overflow-auto max-w-2xl mx-auto border border-[var(--border)]">
             <code>{stack}</code>
           </pre>
         )}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Modal } from "~/components/ui/Modal";
 import { Button } from "~/components/ui/Button";
 import { IconWhatsApp, IconCheck } from "~/components/ui/Icons";
@@ -23,24 +24,21 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
         {/* Product Image */}
-        <div className="relative aspect-square md:aspect-auto bg-[var(--background-soft)]">
-          {/* Placeholder gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800" />
-
-          {/* Product placeholder */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[10rem] opacity-20">📦</span>
-          </div>
-
+        <div className="relative aspect-square md:aspect-auto bg-[var(--background-soft)] min-h-[300px] md:min-h-full">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
           {/* Badges */}
           <div className="absolute top-6 left-6 flex flex-col gap-2">
             {product.new && (
-              <span className="px-4 py-1.5 text-sm font-medium rounded-full bg-[var(--foreground)] text-[var(--background)]">
+              <span className="px-4 py-1.5 text-sm font-bold rounded-full bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-accent)] text-white shadow-lg">
                 Nuevo
               </span>
             )}
             {product.bestseller && (
-              <span className="px-4 py-1.5 text-sm font-medium rounded-full bg-green-600 text-white">
+              <span className="px-4 py-1.5 text-sm font-bold rounded-full bg-gradient-to-r from-[var(--brand-tertiary)] to-[var(--color-emerald)] text-white shadow-lg">
                 Bestseller
               </span>
             )}
@@ -52,16 +50,16 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
           {/* Category & Brand */}
           <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
             <span className="uppercase tracking-wider">{product.category}</span>
-            <span>•</span>
+            <span className="w-1 h-1 rounded-full bg-[var(--muted)]" />
             <span className="capitalize">{product.brand}</span>
           </div>
 
           {/* Name */}
-          <h2 className="text-2xl md:text-3xl font-bold mt-2">{product.name}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mt-2 font-display">{product.name}</h2>
 
           {/* Price */}
           <div className="mt-4">
-            <span className="text-3xl font-bold">
+            <span className="text-3xl font-bold font-display tabular-nums">
               {formatCurrency(product.price)}
             </span>
             <span className="text-[var(--muted)] ml-2">/ pieza</span>
@@ -76,7 +74,7 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
           <div className="mt-6">
             <h4 className="text-sm font-semibold mb-3">
               Color: <span className="font-normal text-[var(--muted)]">
-                {selectedColor === 0 ? "Primario" : `Opción ${selectedColor + 1}`}
+                {selectedColor === 0 ? "Primario" : `Opcion ${selectedColor + 1}`}
               </span>
             </h4>
             <div className="flex flex-wrap gap-2">
@@ -88,7 +86,7 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
                     "w-10 h-10 rounded-xl border-2 transition-all duration-200",
                     "hover:scale-110 relative",
                     selectedColor === i
-                      ? "border-[var(--foreground)] ring-2 ring-[var(--foreground)] ring-offset-2 ring-offset-[var(--background)]"
+                      ? "border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)] ring-offset-2 ring-offset-[var(--background)]"
                       : "border-[var(--border)]"
                   )}
                   style={{ backgroundColor: color }}
@@ -113,28 +111,24 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
           <div className="mt-6">
             <h4 className="text-sm font-semibold mb-3">
               Cantidad: <span className="font-normal text-[var(--muted)]">
-                (Mín. {product.minQuantity} pzas)
+                (Min. {product.minQuantity} pzas)
               </span>
             </h4>
             <div className="flex items-center gap-4">
               <div className="flex items-center border border-[var(--border)] rounded-xl overflow-hidden">
                 <button
-                  onClick={() =>
-                    setQuantity(Math.max(product.minQuantity, quantity - 10))
-                  }
+                  onClick={() => setQuantity(Math.max(product.minQuantity, quantity - 10))}
                   className="w-12 h-12 flex items-center justify-center hover:bg-[var(--surface)] transition-colors text-xl"
                 >
-                  −
+                  -
                 </button>
                 <input
                   type="number"
                   value={quantity}
                   onChange={(e) =>
-                    setQuantity(
-                      Math.max(product.minQuantity, parseInt(e.target.value) || 0)
-                    )
+                    setQuantity(Math.max(product.minQuantity, parseInt(e.target.value) || 0))
                   }
-                  className="w-20 h-12 text-center bg-transparent border-x border-[var(--border)] font-medium focus:outline-none"
+                  className="w-20 h-12 text-center bg-transparent border-x border-[var(--border)] font-medium focus:outline-none tabular-nums"
                 />
                 <button
                   onClick={() => setQuantity(quantity + 10)}
@@ -145,7 +139,7 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
               </div>
               <div className="text-sm text-[var(--muted)]">
                 Subtotal:{" "}
-                <span className="font-bold text-[var(--foreground)]">
+                <span className="font-bold text-[var(--foreground)] tabular-nums">
                   {formatCurrency(total)}
                 </span>
               </div>
@@ -157,15 +151,21 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
             <h4 className="text-sm font-semibold mb-3">Incluye:</h4>
             <ul className="space-y-2">
               {[
-                "Personalización con tu logo",
+                "Personalizacion con tu logo",
                 "Empaque individual",
                 "Certificado de calidad",
-                "Envío a todo México",
-              ].map((feature) => (
-                <li key={feature} className="flex items-center gap-2 text-sm">
-                  <IconCheck className="w-4 h-4 text-green-500 flex-shrink-0" />
+                "Envio a todo Mexico",
+              ].map((feature, i) => (
+                <motion.li
+                  key={feature}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 + i * 0.08 }}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <IconCheck className="w-4 h-4 text-[var(--brand-tertiary)] flex-shrink-0" />
                   <span className="text-[var(--muted)]">{feature}</span>
-                </li>
+                </motion.li>
               ))}
             </ul>
           </div>

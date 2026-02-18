@@ -4,28 +4,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "~/components/ui/ThemeToggle";
 import { Button } from "~/components/ui/Button";
 import { IconMenu, IconClose, IconWhatsApp } from "~/components/ui/Icons";
+import { useScrollDirection } from "~/hooks/useScrollAnimation";
 import { cn } from "~/lib/utils";
 
 const navItems = [
   { label: "Inicio", href: "/" },
-  { label: "Catálogo", href: "/catalogo" },
+  { label: "Catalogo", href: "/catalogo" },
   { label: "Showroom", href: "/showroom" },
   { label: "Contacto", href: "/#contacto" },
 ];
 
 export function Header() {
   const location = useLocation();
-  const [isScrolled, setIsScrolled] = useState(false);
+  const { scrollDirection, scrollY } = useScrollDirection();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const isScrolled = scrollY > 50;
+  const isCompact = scrollDirection === "down" && scrollY > 200;
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -46,7 +41,11 @@ export function Header() {
 
   return (
     <>
-      <header
+      <motion.header
+        animate={{
+          y: isCompact ? -100 : 0,
+        }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
           "fixed top-0 left-0 right-0 z-50",
           "transition-all duration-500 ease-out",
@@ -61,45 +60,59 @@ export function Header() {
             to="/"
             className="relative group flex items-center gap-2"
           >
-            <span className="text-2xl font-bold tracking-tight">
-              ELÍAS
+            <span className="text-2xl font-bold tracking-tight font-display gradient-text-animate">
+              ELIAS
             </span>
             <span className="text-sm font-medium text-[var(--muted)] tracking-widest uppercase">
-              Distribución
+              Distribucion
             </span>
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[var(--foreground)] transition-all duration-300 group-hover:w-full" />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "relative py-2 text-sm font-medium tracking-wide",
-                  "transition-colors duration-300",
-                  location.pathname === item.href
-                    ? "text-[var(--foreground)]"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
-                )}
-              >
-                {item.label}
-                <span
+          <nav className="hidden md:flex items-center gap-1 p-1 rounded-full bg-[var(--surface)]/50 backdrop-blur-sm border border-[var(--border)]">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
                   className={cn(
-                    "absolute bottom-0 left-0 h-0.5 bg-[var(--foreground)]",
+                    "relative px-5 py-2 text-sm font-medium tracking-wide rounded-full",
                     "transition-all duration-300",
-                    location.pathname === item.href
-                      ? "w-full"
-                      : "w-0 group-hover:w-full"
+                    isActive
+                      ? "text-white bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)]"
+                      : "text-[var(--muted)] hover:text-[var(--foreground)]"
                   )}
-                />
-              </Link>
-            ))}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Cmd+K Search Hint */}
+            <button
+              onClick={() => {
+                document.dispatchEvent(
+                  new KeyboardEvent("keydown", { key: "k", metaKey: true })
+                );
+              }}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg",
+                "bg-[var(--surface)] border border-[var(--border)]",
+                "text-xs text-[var(--muted)] hover:text-[var(--foreground)]",
+                "hover:border-[var(--brand-primary)]",
+                "transition-all duration-200"
+              )}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <kbd className="font-mono text-[10px]">&#8984;K</kbd>
+            </button>
             <ThemeToggle />
             <Button
               size="sm"
@@ -118,18 +131,56 @@ export function Header() {
               className={cn(
                 "w-10 h-10 flex items-center justify-center rounded-full",
                 "bg-[var(--surface)] border border-[var(--border)]",
-                "hover:bg-[var(--background-soft)] hover:border-[var(--foreground)]",
+                "hover:bg-[var(--background-soft)] hover:border-[var(--brand-primary)]",
                 "transition-all duration-300"
               )}
-              aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-label={isMobileMenuOpen ? "Cerrar menu" : "Abrir menu"}
             >
               {isMobileMenuOpen ? <IconClose /> : <IconMenu />}
             </button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      {/* Mobile Menu Overlay */}
+      {/* Floating compact nav pill (shows when scrolling down) */}
+      <AnimatePresence>
+        {isCompact && !isMobileMenuOpen && (
+          <motion.div
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -80, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden md:block"
+          >
+            <nav className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-[var(--background)]/90 backdrop-blur-xl border border-[var(--border)] shadow-lg">
+              <Link to="/" className="px-3 py-1.5 text-sm font-bold font-display gradient-text">
+                E
+              </Link>
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={cn(
+                      "px-4 py-1.5 text-xs font-medium rounded-full",
+                      "transition-all duration-300",
+                      isActive
+                        ? "text-white bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)]"
+                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <ThemeToggle className="ml-1" />
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Menu Overlay - Full Screen */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -137,65 +188,61 @@ export function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 md:hidden"
+            className="fixed inset-0 z-40 md:hidden bg-[var(--background)]"
           >
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
+            {/* Background decorative elements */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="gradient-orb w-[400px] h-[400px] bg-[var(--brand-primary)] top-[-100px] right-[-100px] opacity-20" />
+              <div className="gradient-orb w-[300px] h-[300px] bg-[var(--brand-secondary)] bottom-[-50px] left-[-50px] opacity-20" />
+            </div>
 
-            {/* Menu Panel */}
-            <motion.nav
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className={cn(
-                "absolute right-0 top-0 bottom-0 w-[280px]",
-                "bg-[var(--background)] border-l border-[var(--border)]",
-                "flex flex-col pt-24 px-6 pb-8"
-              )}
-            >
-              <div className="flex-1 flex flex-col gap-2">
+            {/* Menu Content */}
+            <div className="relative h-full flex flex-col items-center justify-center">
+              <nav className="flex flex-col items-center gap-2">
                 {navItems.map((item, index) => (
                   <motion.div
                     key={item.href}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                    transition={{
+                      delay: 0.05 + index * 0.08,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 20,
+                    }}
                   >
                     <Link
                       to={item.href}
                       className={cn(
-                        "block py-4 text-lg font-medium",
-                        "border-b border-[var(--border)]",
+                        "block px-8 py-4 text-3xl font-bold font-display tracking-tight text-center",
                         "transition-colors duration-300",
                         location.pathname === item.href
-                          ? "text-[var(--foreground)]"
-                          : "text-[var(--muted)]"
+                          ? "gradient-text"
+                          : "text-[var(--muted)] hover:text-[var(--foreground)]"
                       )}
                     >
                       {item.label}
                     </Link>
                   </motion.div>
                 ))}
-              </div>
+              </nav>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.4 }}
+                className="mt-12"
               >
                 <Button
-                  className="w-full"
-                  icon={<IconWhatsApp className="w-4 h-4" />}
+                  size="lg"
+                  icon={<IconWhatsApp className="w-5 h-5" />}
                   onClick={() => window.open("https://wa.me/5212345678901", "_blank")}
                 >
                   Cotizar ahora
                 </Button>
               </motion.div>
-            </motion.nav>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

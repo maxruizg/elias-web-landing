@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode, useCallback, useRef } from "react";
 import { cn } from "~/lib/utils";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -21,45 +21,67 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       iconPosition = "left",
       className,
       disabled,
+      onClick,
       ...props
     },
     ref
   ) => {
+    const rippleRef = useRef<HTMLSpanElement>(null);
+
+    const handleClick = useCallback(
+      (e: React.MouseEvent<HTMLButtonElement>) => {
+        // Ripple effect
+        const button = e.currentTarget;
+        const rect = button.getBoundingClientRect();
+        const ripple = document.createElement("span");
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+        ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+        ripple.className = "absolute rounded-full bg-white/30 animate-[ripple_0.6s_ease-out] pointer-events-none";
+        button.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+
+        onClick?.(e);
+      },
+      [onClick]
+    );
+
     const baseStyles = `
-      relative inline-flex items-center justify-center gap-2
+      group relative inline-flex items-center justify-center gap-2
       font-medium tracking-tight
       transition-all duration-300 ease-out
       focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
       disabled:opacity-50 disabled:cursor-not-allowed
-      overflow-hidden
+      overflow-hidden cursor-pointer
     `;
 
     const variants = {
       primary: `
-        bg-[var(--foreground)] text-[var(--background)]
-        hover:opacity-90 hover:scale-[1.02]
-        active:scale-[0.98]
-        focus-visible:ring-[var(--foreground)]
+        bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white
+        hover:shadow-lg hover:shadow-[var(--brand-primary)]/25 hover:scale-[1.03] hover:-translate-y-0.5
+        active:scale-[0.97]
+        focus-visible:ring-[var(--brand-primary)]
       `,
       secondary: `
         bg-[var(--surface)] text-[var(--foreground)]
         border border-[var(--border)]
-        hover:bg-[var(--background-soft)] hover:border-[var(--foreground)]
-        active:scale-[0.98]
-        focus-visible:ring-[var(--foreground)]
+        hover:bg-[var(--background-soft)] hover:border-[var(--brand-primary)] hover:shadow-md hover:-translate-y-0.5
+        active:scale-[0.97]
+        focus-visible:ring-[var(--brand-primary)]
       `,
       outline: `
         bg-transparent text-[var(--foreground)]
-        border border-[var(--border)]
-        hover:bg-[var(--surface)] hover:border-[var(--foreground)]
-        active:scale-[0.98]
-        focus-visible:ring-[var(--foreground)]
+        border-2 border-[var(--border)]
+        hover:bg-[var(--surface)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] hover:shadow-md hover:-translate-y-0.5
+        active:scale-[0.97]
+        focus-visible:ring-[var(--brand-primary)]
       `,
       ghost: `
         bg-transparent text-[var(--foreground)]
-        hover:bg-[var(--surface)]
-        active:scale-[0.98]
-        focus-visible:ring-[var(--foreground)]
+        hover:bg-[var(--surface)] hover:-translate-y-0.5
+        active:scale-[0.97]
+        focus-visible:ring-[var(--brand-primary)]
       `,
     };
 
@@ -74,6 +96,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         disabled={disabled || isLoading}
+        onClick={handleClick}
         {...props}
       >
         {isLoading ? (
@@ -111,7 +134,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           {children}
         </span>
         {/* Shimmer effect on hover */}
-        <span className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:translate-x-[100%] transition-transform duration-700" />
+        <span className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:translate-x-[100%] transition-transform duration-700" />
+        <span ref={rippleRef} />
       </button>
     );
   }

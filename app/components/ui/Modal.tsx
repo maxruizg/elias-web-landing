@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { cn } from "~/lib/utils";
 
 interface ModalProps {
@@ -17,6 +17,8 @@ export function Modal({
   className,
   size = "md",
 }: ModalProps) {
+  const dragControls = useDragControls();
+
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -53,7 +55,7 @@ export function Modal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -64,24 +66,44 @@ export function Modal({
             onClick={onClose}
           />
 
-          {/* Modal content */}
+          {/* Modal content - Bottom sheet on mobile, centered on desktop */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
             transition={{
               type: "spring",
               damping: 25,
               stiffness: 300,
             }}
+            drag="y"
+            dragControls={dragControls}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.6 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 100 || info.velocity.y > 500) {
+                onClose();
+              }
+            }}
             className={cn(
-              "relative w-full bg-[var(--background)] rounded-2xl shadow-2xl",
+              "relative w-full bg-[var(--background)] shadow-2xl",
               "border border-[var(--border)]",
               "overflow-hidden",
+              // Mobile: bottom sheet with top rounding
+              "rounded-t-3xl md:rounded-2xl",
+              "max-h-[90vh] md:max-h-none",
               sizes[size],
               className
             )}
           >
+            {/* Drag handle - mobile only */}
+            <div
+              className="md:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
+              <div className="w-10 h-1 rounded-full bg-[var(--border)]" />
+            </div>
+
             {/* Close button */}
             <button
               onClick={onClose}
@@ -90,9 +112,9 @@ export function Modal({
                 "w-10 h-10 rounded-full",
                 "flex items-center justify-center",
                 "bg-[var(--surface)] border border-[var(--border)]",
-                "hover:bg-[var(--background-soft)] hover:border-[var(--foreground)]",
+                "hover:bg-[var(--background-soft)] hover:border-[var(--brand-primary)]",
                 "transition-all duration-200",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foreground)]"
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               )}
               aria-label="Cerrar"
             >
